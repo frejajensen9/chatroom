@@ -9,25 +9,52 @@ const Registration = (function() {
     // * `onError`   - This is a callback function to be called when the
     //                 request fails in this form `onError(error)`
     const register = function(username, avatar, name, password, onSuccess, onError) {
-
         //
         // A. Preparing the user data
         //
- 
+        const jsonData = JSON.stringify({
+            username: username,
+            avatar: avatar,
+            name: name,
+            password: password
+        });
+
         //
         // B. Sending the AJAX request to the server
         //
+        fetch("/register", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: jsonData
+        })
+            .then((res) => {
+                if (!res.ok) {
+                    throw new Error("Network response was not ok");
+                }
+                return res.json();
+            })
+            .then((json) => {
+                //
+                // F. Processing any error returned by the server
+                //
+                if (json.status === "error") {
+                    if (onError) onError(json.error);
+                    return;
+                }
 
-        //
-        // F. Processing any error returned by the server
-        //
-
-        //
-        // J. Handling the success response from the server
-        //
- 
-        // Delete when appropriate
-        if (onError) onError("This function is not yet implemented.");
+                //
+                // J. Handling the success response from the server
+                //
+                if (onSuccess) onSuccess();
+            })
+            .catch((error) => {
+                //
+                // Handle network errors or other exceptions
+                //
+                if (onError) onError(error.message || "Registration failed");
+            });
     };
 
     return { register };
