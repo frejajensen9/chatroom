@@ -1,16 +1,20 @@
-Starting the server
-
+Installing necessary dependencies:
 ```sh
 npm install express
-npm install bcrypt
-npm install express-session
-
-node chat_server.js
 ```
-
-Installing Socket.IO
-
+```sh
+npm install bcrypt
+```
+```sh
+npm install express-session
+```
 ```sh
 npm install socket.io
 ```
 
+Starting the server:
+```sh
+node chat_server.js
+```
+The URL of the system is:
+http://localhost:8000
