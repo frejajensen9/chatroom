@@ -250,3 +250,11 @@ button.icon:active {
     width: 270px;
     align-self: stretch;
 }
+
+#typing-indicator {
+    height: 20px;
+    color: #666;
+    font-style: italic;
+    padding: 5px 10px;
+    font-size: 0.9em;
+}

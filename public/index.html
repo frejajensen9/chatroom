@@ -26,18 +26,15 @@
 
         <div id="main-panel" class="row">
             <div id="chat-panel" class="col">
-                <div id="chat-area" class="col">
-                    This function will be implemented in Lab 6.
-                </div>
+                <div id="chat-area" class="col"></div>
+                <div id="typing-indicator"></div>
                 <form id="chat-input-form" autocomplete="off">
-                    <input id="chat-input" disabled placeholder="Enter your message"></input>
+                    <input id="chat-input" placeholder="Enter your message"></input>
                 </form>
             </div>
 
             <div id="online-users-panel" class="col">
-                <div id="online-users-area" class="col">
-                    This function will be implemented in Lab 6.
-                </div>
+                <div id="online-users-area" class="col"></div>
             </div>
         </div>
     </div>
@@ -74,6 +71,8 @@
         </div>
     </div>
 
+    <script src="/socket.io/socket.io.min.js"></script>
+    <script src="scripts/socket.js"></script>
     <script src="scripts/avatar.js"></script>
     <script src="scripts/ui.js"></script>
     <script src="scripts/registration.js"></script>
@@ -89,9 +88,30 @@
                 SignInForm.hide();
                 UserPanel.update(Authentication.getUser());
                 UserPanel.show();
+
+                Socket.connect();
             },
             () => { SignInForm.show(); }
         );
+
+        // Typing indicator
+        let typingTimer;
+        const doneTypingInterval = 1000; // 1 second
+
+        $('#chat-input').on('keydown', function() {
+            console.log("Key pressed - sending typing event");
+            // Only send typing event if we're not already in a typing state
+            if (!typingTimer) {
+                console.log("Emitting typing event");
+                Socket.sendTypingEvent();
+            }
+
+            // Reset the timer on each keydown
+            clearTimeout(typingTimer);
+            typingTimer = setTimeout(() => {
+                typingTimer = null;
+            }, doneTypingInterval);
+        });
     });
     </script>
 </body>

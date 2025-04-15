@@ -154,12 +154,96 @@ app.get("/signout", (req, res) => {
 });
 
 
-//
-// ***** Please insert your Lab 6 code here *****
-//
+// ***** Lab 6 Code - Socket.IO Implementation *****
 
+// Create HTTP server for Socket.IO
+const httpServer = require('http').createServer(app);
+const io = require('socket.io')(httpServer);
 
-// Use a web server to listen at port 8000
-app.listen(8000, () => {
+// Store online users
+const onlineUsers = {};
+
+// Use session middleware with Socket.IO
+io.use((socket, next) => {
+    chatSession(socket.request, {}, next);
+});
+
+// Socket.IO connection handler
+io.on('connection', (socket) => {
+    // Get user from session
+    const user = socket.request.session.user;
+
+    // Add user to online list if authenticated
+    if (user) {
+        onlineUsers[user.username] = {
+            avatar: user.avatar,
+            name: user.name
+        };
+
+        // Broadcast new user to all clients
+        io.emit('add user', JSON.stringify(user));
+        console.log(onlineUsers);
+
+        // Handle get users request
+        socket.on('get users', () => {
+            socket.emit('users', JSON.stringify(onlineUsers));
+        });
+
+        // Handle get messages request
+        socket.on('get messages', () => {
+            const chatroom = JSON.parse(fs.readFileSync('./data/chatroom.json', 'utf8'));
+            socket.emit('messages', JSON.stringify(chatroom));
+        });
+
+        // Handle new messages
+        socket.on('post message', (content) => {
+            const chatroom = JSON.parse(fs.readFileSync('./data/chatroom.json', 'utf8'));
+
+            const newMessage = {
+                user: {
+                    username: user.username,
+                    avatar: user.avatar,
+                    name: user.name
+                },
+                datetime: new Date(),
+                content: content
+            };
+
+            chatroom.push(newMessage);
+            fs.writeFileSync('./data/chatroom.json', JSON.stringify(chatroom, null, 2));
+
+            // Broadcast new message to all clients
+            io.emit('add message', JSON.stringify(newMessage));
+        });
+
+        // Handle disconnection
+        socket.on('disconnect', () => {
+            if (user) {
+                delete onlineUsers[user.username];
+                // Broadcast user removal to all clients
+                io.emit('remove user', JSON.stringify(user));
+                console.log(onlineUsers);
+            }
+        });
+
+        // Handle typing indicator
+        socket.on('typing', () => {
+            if (user) {
+                // Ensure we're sending properly formatted data
+                const typingData = JSON.stringify({
+                    user: {
+                        username: user.username,
+                        avatar: user.avatar,
+                        name: user.name
+                    }
+                });
+                socket.broadcast.emit('user typing', typingData);
+            }
+        });
+    }
+});
+
+// Change app.listen to httpServer.listen
+httpServer.listen(8000, () => {
     console.log("The chat server has started...");
 });
